@@ -2,232 +2,114 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Kasir Kelontong Ceria</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <title>Kasir Ceria</title>
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
-      background: #fffbea;
-      padding: 40px;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      color: #e67e22;
-      margin-bottom: 30px;
-    }
-    .section {
-      margin-bottom: 40px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-      background: #fff;
+      font-family: sans-serif;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    h2 {
-      color: #2c3e50;
-      margin-bottom: 10px;
-    }
-    input, select, button {
-      padding: 10px;
-      margin: 5px 0;
-      font-size: 16px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    button {
-      background: #27ae60;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-    button:hover {
-      background: #219150;
+      background: #f0f8ff;
     }
     .item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #f9f9f9;
+      margin-bottom: 10px;
+    }
+    input[type="number"] {
+      width: 50px;
+    }
+    #keranjang {
+      margin-top: 20px;
+      border-top: 2px dashed #aaa;
+      padding-top: 10px;
+    }
+    #notification {
+      display: none;
+      padding: 10px;
+      margin-top: 10px;
+      text-align: center;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    button {
+      margin-right: 10px;
       padding: 8px 12px;
-      margin-bottom: 5px;
-      border-radius: 6px;
-    }
-    .item span {
-      flex: 1;
-    }
-    .remove-btn {
-      background: none;
       border: none;
-      color: #e74c3c;
-      font-size: 18px;
+      border-radius: 5px;
       cursor: pointer;
     }
-    #total, #changeInfo {
-      font-weight: bold;
-      font-size: 18px;
-      margin-top: 10px;
-      text-align: right;
-    }
-    #confetti, #finalMessage {
-      text-align: center;
-      font-size: 24px;
-      color: #f39c12;
-      margin-top: 10px;
-    }
+    #btnBayar { background-color: #4CAF50; color: white; }
+    #btnBatal { background-color: #f44336; color: white; }
   </style>
 </head>
 <body>
 
-  <h1>🛒 Kasir Kelontong Ceria</h1>
+  <h2>Kasir Ceria 🛒</h2>
 
-  <div class="section">
-    <h2>📦 Inventory Barang</h2>
-    <input type="text" id="invName" placeholder="Nama Barang">
-    <input type="number" id="invPrice" placeholder="Harga (Rp)">
-    <button onclick="addToInventory()">Tambah ke Inventory</button>
-    <div id="inventoryList"></div>
+  <div class="item">
+    <label>Sabun (Rp 5000): </label>
+    <input type="number" id="jumlahSabun" value="1" min="1">
+    <button onclick="tambahKeKeranjang('Sabun', 5000, jumlahSabun.value)">Tambah</button>
   </div>
 
-  <div class="section">
-    <h2>💳 Kasir</h2>
-    <select id="itemSelect">
-      <option value="">-- Pilih Barang --</option>
-    </select>
-    <button onclick="addItemFromInventory()">Tambah ke Keranjang</button>
-    <div id="cart"></div>
-    <div id="total">Total: Rp 0</div>
-
-    <input type="number" id="customerMoney" placeholder="Uang Pelanggan (Rp)">
-    <div id="changeInfo"></div>
-    <button onclick="finalizePayment()" id="finalPayBtn" disabled>Bayar</button>
-    <div id="finalMessage"></div>
+  <div id="keranjang">
+    <h3>Keranjang:</h3>
+    <ul id="daftarKeranjang"></ul>
+    <p><strong>Total: Rp <span id="totalHarga">0</span></strong></p>
+    <button id="btnBayar">Bayar</button>
+    <button id="btnBatal">Batal</button>
+    <div id="notification"></div>
   </div>
 
   <script>
-    let inventory = JSON.parse(localStorage.getItem('inventory')) || [];
-    let cart = [];
+    let keranjang = [];
+    let total = 0;
 
-    function saveInventory() {
-      localStorage.setItem('inventory', JSON.stringify(inventory));
+    function tambahKeKeranjang(nama, harga, jumlah) {
+      jumlah = parseInt(jumlah);
+      const totalItem = harga * jumlah;
+      keranjang.push({ nama, harga, jumlah, totalItem });
+      total += totalItem;
+      updateKeranjang();
     }
 
-    function addToInventory() {
-      const name = document.getElementById('invName').value;
-      const price = parseInt(document.getElementById('invPrice').value);
-      if (name && price) {
-        inventory.push({ name, price });
-        saveInventory();
-        updateInventoryList();
-        updateItemSelect();
-        document.getElementById('invName').value = '';
-        document.getElementById('invPrice').value = '';
-      }
-    }
-
-    function removeInventoryItem(index) {
-      inventory.splice(index, 1);
-      saveInventory();
-      updateInventoryList();
-      updateItemSelect();
-    }
-
-    function updateInventoryList() {
-      const list = document.getElementById('inventoryList');
-      list.innerHTML = '';
-      inventory.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `
-          <span>${item.name}</span>
-          <span>Rp ${item.price}</span>
-          <button class="remove-btn" onclick="removeInventoryItem(${index})">❌</button>
-        `;
-        list.appendChild(div);
+    function updateKeranjang() {
+      const daftar = document.getElementById("daftarKeranjang");
+      daftar.innerHTML = "";
+      keranjang.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = `${item.nama} x${item.jumlah} = Rp ${item.totalItem}`;
+        daftar.appendChild(li);
       });
+      document.getElementById("totalHarga").textContent = total;
     }
 
-    function updateItemSelect() {
-      const select = document.getElementById('itemSelect');
-      select.innerHTML = `<option value="">-- Pilih Barang --</option>`;
-      inventory.forEach((item, index) => {
-        const option = document.createElement('option');
-        option.value = index;
-        option.text = item.name;
-        select.appendChild(option);
-      });
+    function showNotification(message, type) {
+      const notif = document.getElementById("notification");
+      notif.textContent = message;
+      notif.className = type;
+      notif.style.display = "block";
+      setTimeout(() => notif.style.display = "none", 3000);
     }
 
-    function addItemFromInventory() {
-      const index = document.getElementById('itemSelect').value;
-      if (index !== '') {
-        const item = inventory[index];
-        cart.push(item);
-        updateCart();
-        calculateChange();
-      }
-    }
+    document.getElementById("btnBayar").addEventListener("click", () => {
+      showNotification("Transaksi Berhasil 🎉", "success");
+      keranjang = [];
+      total = 0;
+      updateKeranjang();
+    });
 
-    function updateCart() {
-      const cartDiv = document.getElementById('cart');
-      cartDiv.innerHTML = '';
-      let total = 0;
-      cart.forEach((item, i) => {
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `
-          <span>${item.name}</span>
-          <span>Rp ${item.price}</span>
-          <button class="remove-btn" onclick="removeItem(${i})">❌</button>
-        `;
-        cartDiv.appendChild(div);
-        total += item.price;
-      });
-      document.getElementById('total').innerText = `Total: Rp ${total}`;
-    }
-
-    function removeItem(index) {
-      cart.splice(index, 1);
-      updateCart();
-      calculateChange();
-    }
-
-    document.getElementById('customerMoney').addEventListener('input', calculateChange);
-
-    function calculateChange() {
-      const money = parseInt(document.getElementById('customerMoney').value);
-      const total = cart.reduce((sum, item) => sum + item.price, 0);
-      const change = money - total;
-      const info = document.getElementById('changeInfo');
-      const payBtn = document.getElementById('finalPayBtn');
-
-      if (money >= total && cart.length > 0) {
-        info.innerText = `Kembalian: Rp ${change}`;
-        payBtn.disabled = false;
-      } else {
-        info.innerText = money ? `Uang kurang Rp ${Math.abs(change)}` : '';
-        payBtn.disabled = true;
-      }
-    }
-
-    function finalizePayment() {
-      document.getElementById('finalMessage').innerText = '🎉 Transaksi Berhasil!';
-      setTimeout(() => {
-        cart = [];
-        updateCart();
-        document.getElementById('customerMoney').value = '';
-        document.getElementById('changeInfo').innerText = '';
-        document.getElementById('finalMessage').innerText = '';
-        document.getElementById('finalPayBtn').disabled = true;
-      }, 2000);
-    }
-
-    // Init
-    updateInventoryList();
-    updateItemSelect();
+    document.getElementById("btnBatal").addEventListener("click", () => {
+      showNotification("Transaksi Dibatalkan ❌", "error");
+      keranjang = [];
+      total = 0;
+      updateKeranjang();
+    });
   </script>
 
 </body>
