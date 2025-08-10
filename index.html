@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kasir Ceria PRO</title>
+  <title>Kasir Ceria</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <style>
     body {
@@ -13,12 +13,12 @@
       padding: 20px;
       color: #333;
     }
-    h1 {
+    h1, h2, h3 {
       text-align: center;
       color: #ff9800;
     }
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
       background: #fff;
       padding: 20px;
@@ -71,8 +71,33 @@
 </head>
 <body>
   <div class="container">
-    <h1>Kasir Ceria PRO 💼</h1>
+    <h1>Kasir Ceria PRO MAX 💼</h1>
 
+    <h2>Kelola Inventory 🛠️</h2>
+    <label for="namaBaru">Nama Barang:</label>
+    <input type="text" id="namaBaru" placeholder="Contoh: Spidol" />
+
+    <label for="stokBaru">Stok:</label>
+    <input type="number" id="stokBaru" min="1" />
+
+    <label for="hargaBaru">Harga:</label>
+    <input type="number" id="hargaBaru" min="0" />
+
+    <button onclick="tambahInventory()">Tambah / Update Barang</button>
+
+    <h2>Inventory Barang 📦</h2>
+    <table id="inventoryTable">
+      <thead>
+        <tr>
+          <th>Barang</th>
+          <th>Stok</th>
+          <th>Harga</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>Transaksi 🛒</h2>
     <label for="kasir">Pilih Kasir:</label>
     <select id="kasir">
       <option value="Fariz">Fariz</option>
@@ -121,16 +146,58 @@
 
     const keranjang = [];
 
-    const barangSelect = document.getElementById("barang");
-    for (let item in inventory) {
-      const option = document.createElement("option");
-      option.value = item;
-      option.textContent = `${item} (Stok: ${inventory[item].stok})`;
-      barangSelect.appendChild(option);
+    function updateBarangDropdown() {
+      const barangSelect = document.getElementById("barang");
+      barangSelect.innerHTML = "";
+      for (let item in inventory) {
+        const option = document.createElement("option");
+        option.value = item;
+        option.textContent = `${item} (Stok: ${inventory[item].stok})`;
+        barangSelect.appendChild(option);
+      }
+    }
+
+    function renderInventoryTable() {
+      const tbody = document.querySelector("#inventoryTable tbody");
+      tbody.innerHTML = "";
+      for (let item in inventory) {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item}</td>
+          <td>${inventory[item].stok}</td>
+          <td>Rp ${inventory[item].harga}</td>
+        `;
+        tbody.appendChild(row);
+      }
+    }
+
+    function tambahInventory() {
+      const nama = document.getElementById("namaBaru").value.trim();
+      const stok = parseInt(document.getElementById("stokBaru").value);
+      const harga = parseInt(document.getElementById("hargaBaru").value);
+
+      if (!nama || stok < 1 || harga < 0) {
+        alert("Isi semua data dengan benar!");
+        return;
+      }
+
+      if (inventory[nama]) {
+        inventory[nama].stok += stok;
+        inventory[nama].harga = harga;
+      } else {
+        inventory[nama] = { stok, harga };
+      }
+
+      document.getElementById("namaBaru").value = "";
+      document.getElementById("stokBaru").value = "";
+      document.getElementById("hargaBaru").value = "";
+
+      updateBarangDropdown();
+      renderInventoryTable();
     }
 
     function tambahKeranjang() {
-      const barang = barangSelect.value;
+      const barang = document.getElementById("barang").value;
       const jumlah = parseInt(document.getElementById("jumlah").value);
       const stok = inventory[barang].stok;
 
@@ -140,7 +207,6 @@
       }
 
       inventory[barang].stok -= jumlah;
-      updateBarangDropdown();
 
       keranjang.push({
         barang,
@@ -150,16 +216,8 @@
       });
 
       renderKeranjang();
-    }
-
-    function updateBarangDropdown() {
-      barangSelect.innerHTML = "";
-      for (let item in inventory) {
-        const option = document.createElement("option");
-        option.value = item;
-        option.textContent = `${item} (Stok: ${inventory[item].stok})`;
-        barangSelect.appendChild(option);
-      }
+      updateBarangDropdown();
+      renderInventoryTable();
     }
 
     function renderKeranjang() {
@@ -187,8 +245,9 @@
       const item = keranjang[index];
       inventory[item.barang].stok += item.jumlah;
       keranjang.splice(index, 1);
-      updateBarangDropdown();
       renderKeranjang();
+      updateBarangDropdown();
+      renderInventoryTable();
     }
 
     function bayar() {
@@ -203,27 +262,4 @@
       const kembalian = bayar - total;
       document.getElementById("notif").textContent = `Transaksi Berhasil 🎉 Kembalian: Rp ${kembalian}`;
       document.getElementById("notif").className = "notif success";
-      document.getElementById("notif").style.display = "block";
-
-      keranjang.length = 0;
-      renderKeranjang();
-      updateBarangDropdown();
-      document.getElementById("bayar").value = "";
-    }
-
-    function batal() {
-      keranjang.forEach(item => {
-        inventory[item.barang].stok += item.jumlah;
-      });
-      keranjang.length = 0;
-      renderKeranjang();
-      updateBarangDropdown();
-
-      document.getElementById("notif").textContent = "Transaksi Dibatalkan ❌";
-      document.getElementById("notif").className = "notif cancel";
-      document.getElementById("notif").style.display = "block";
-      document.getElementById("bayar").value = "";
-    }
-  </script>
-</body>
-</html>
+      document.getElementById("notif
