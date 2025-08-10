@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kasir Ceria</title>
+  <title>Kasir Ceria PRO</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <style>
     body {
@@ -25,7 +25,7 @@
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    select, input[type="number"], button {
+    select, input[type="number"], input[type="text"], button {
       font-family: 'Poppins', sans-serif;
       padding: 10px;
       margin: 10px 0;
@@ -71,7 +71,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>Kasir Ceria 🌟</h1>
+    <h1>Kasir Ceria PRO 💼</h1>
 
     <label for="kasir">Pilih Kasir:</label>
     <select id="kasir">
@@ -81,11 +81,7 @@
     </select>
 
     <label for="barang">Pilih Barang:</label>
-    <select id="barang">
-      <option value="Pensil">Pensil</option>
-      <option value="Buku">Buku</option>
-      <option value="Penghapus">Penghapus</option>
-    </select>
+    <select id="barang"></select>
 
     <label for="jumlah">Jumlah:</label>
     <input type="number" id="jumlah" min="1" value="1" />
@@ -97,11 +93,18 @@
         <tr>
           <th>Barang</th>
           <th>Jumlah</th>
+          <th>Harga</th>
+          <th>Total</th>
           <th>Aksi</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
+
+    <h3>Total Belanja: Rp <span id="totalBelanja">0</span></h3>
+
+    <label for="bayar">Uang Bayar:</label>
+    <input type="number" id="bayar" min="0" />
 
     <button onclick="bayar()">Bayar</button>
     <button onclick="batal()">Batal</button>
@@ -110,53 +113,116 @@
   </div>
 
   <script>
+    const inventory = {
+      "Pensil": { stok: 10, harga: 2000 },
+      "Buku": { stok: 5, harga: 10000 },
+      "Penghapus": { stok: 8, harga: 3000 }
+    };
+
     const keranjang = [];
 
+    const barangSelect = document.getElementById("barang");
+    for (let item in inventory) {
+      const option = document.createElement("option");
+      option.value = item;
+      option.textContent = `${item} (Stok: ${inventory[item].stok})`;
+      barangSelect.appendChild(option);
+    }
+
     function tambahKeranjang() {
-      const barang = document.getElementById("barang").value;
+      const barang = barangSelect.value;
       const jumlah = parseInt(document.getElementById("jumlah").value);
+      const stok = inventory[barang].stok;
 
-      if (!barang || jumlah < 1) return;
+      if (jumlah > stok) {
+        alert("Stok tidak cukup!");
+        return;
+      }
 
-      keranjang.push({ barang, jumlah });
+      inventory[barang].stok -= jumlah;
+      updateBarangDropdown();
+
+      keranjang.push({
+        barang,
+        jumlah,
+        harga: inventory[barang].harga,
+        total: jumlah * inventory[barang].harga
+      });
+
       renderKeranjang();
+    }
+
+    function updateBarangDropdown() {
+      barangSelect.innerHTML = "";
+      for (let item in inventory) {
+        const option = document.createElement("option");
+        option.value = item;
+        option.textContent = `${item} (Stok: ${inventory[item].stok})`;
+        barangSelect.appendChild(option);
+      }
     }
 
     function renderKeranjang() {
       const tbody = document.querySelector("#keranjang tbody");
       tbody.innerHTML = "";
+      let total = 0;
 
       keranjang.forEach((item, index) => {
+        total += item.total;
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${item.barang}</td>
           <td>${item.jumlah}</td>
+          <td>Rp ${item.harga}</td>
+          <td>Rp ${item.total}</td>
           <td><button onclick="hapusItem(${index})">Hapus</button></td>
         `;
         tbody.appendChild(row);
       });
+
+      document.getElementById("totalBelanja").textContent = total;
     }
 
     function hapusItem(index) {
+      const item = keranjang[index];
+      inventory[item.barang].stok += item.jumlah;
       keranjang.splice(index, 1);
+      updateBarangDropdown();
       renderKeranjang();
     }
 
     function bayar() {
-      if (keranjang.length === 0) return;
-      document.getElementById("notif").textContent = "Transaksi Berhasil 🎉";
+      const total = parseInt(document.getElementById("totalBelanja").textContent);
+      const bayar = parseInt(document.getElementById("bayar").value);
+
+      if (bayar < total) {
+        alert("Uang tidak cukup!");
+        return;
+      }
+
+      const kembalian = bayar - total;
+      document.getElementById("notif").textContent = `Transaksi Berhasil 🎉 Kembalian: Rp ${kembalian}`;
       document.getElementById("notif").className = "notif success";
       document.getElementById("notif").style.display = "block";
+
       keranjang.length = 0;
       renderKeranjang();
+      updateBarangDropdown();
+      document.getElementById("bayar").value = "";
     }
 
     function batal() {
+      keranjang.forEach(item => {
+        inventory[item.barang].stok += item.jumlah;
+      });
+      keranjang.length = 0;
+      renderKeranjang();
+      updateBarangDropdown();
+
       document.getElementById("notif").textContent = "Transaksi Dibatalkan ❌";
       document.getElementById("notif").className = "notif cancel";
       document.getElementById("notif").style.display = "block";
-      keranjang.length = 0;
-      renderKeranjang();
+      document.getElementById("bayar").value = "";
     }
   </script>
 </body>
