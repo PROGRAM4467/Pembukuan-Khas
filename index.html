@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Kasir Kelontong Ceria</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fef9e7;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #d35400;
+    }
+    .input-section, .cart-section {
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 16px;
+    }
+    #cart {
+      border: 1px solid #ccc;
+      padding: 10px;
+      background: #fff;
+    }
+    .item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    #total {
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 10px;
+    }
+    #payBtn {
+      background: #27ae60;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #payBtn:active {
+      transform: scale(0.98);
+    }
+    .confetti {
+      animation: pop 0.5s ease;
+      color: #e74c3c;
+      font-size: 24px;
+      text-align: center;
+    }
+    @keyframes pop {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🛒 Kasir Kelontong Ceria</h1>
+
+  <div class="input-section">
+    <input type="text" id="itemName" placeholder="Nama Barang">
+    <input type="number" id="itemPrice" placeholder="Harga (Rp)">
+    <button onclick="addItem()">Tambah</button>
+  </div>
+
+  <div class="cart-section">
+    <div id="cart"></div>
+    <div id="total">Total: Rp 0</div>
+    <button id="payBtn" onclick="pay()">Bayar</button>
+    <div id="confetti" class="confetti"></div>
+  </div>
+
+  <script>
+    let cart = [];
+    function addItem() {
+      const name = document.getElementById('itemName').value;
+      const price = parseInt(document.getElementById('itemPrice').value);
+      if (name && price) {
+        cart.push({ name, price });
+        updateCart();
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemPrice').value = '';
+      }
+    }
+
+    function updateCart() {
+      const cartDiv = document.getElementById('cart');
+      cartDiv.innerHTML = '';
+      let total = 0;
+      cart.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<span>${item.name}</span><span>Rp ${item.price}</span>`;
+        cartDiv.appendChild(div);
+        total += item.price;
+      });
+      document.getElementById('total').innerText = `Total: Rp ${total}`;
+    }
+
+    function pay() {
+      if (cart.length === 0) return;
+      document.getElementById('confetti').innerText = '🎉 Transaksi Berhasil!';
+      setTimeout(() => {
+        document.getElementById('confetti').innerText = '';
+        cart = [];
+        updateCart();
+      }, 2000);
+    }
+  </script>
+
+</body>
+</html>
