@@ -26,6 +26,10 @@
       border-radius: 12px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
+    h2 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
     input, select, button {
       padding: 10px;
       margin: 5px 0;
@@ -62,13 +66,13 @@
       font-size: 18px;
       cursor: pointer;
     }
-    #total {
+    #total, #changeInfo {
       font-weight: bold;
       font-size: 18px;
       margin-top: 10px;
       text-align: right;
     }
-    #confetti {
+    #confetti, #finalMessage {
       text-align: center;
       font-size: 24px;
       color: #f39c12;
@@ -96,8 +100,11 @@
     <button onclick="addItemFromInventory()">Tambah ke Keranjang</button>
     <div id="cart"></div>
     <div id="total">Total: Rp 0</div>
-    <button onclick="pay()">Bayar</button>
-    <div id="confetti"></div>
+
+    <input type="number" id="customerMoney" placeholder="Uang Pelanggan (Rp)">
+    <div id="changeInfo"></div>
+    <button onclick="finalizePayment()" id="finalPayBtn" disabled>Bayar</button>
+    <div id="finalMessage"></div>
   </div>
 
   <script>
@@ -149,6 +156,7 @@
         const item = inventory[index];
         cart.push(item);
         updateCart();
+        calculateChange();
       }
     }
 
@@ -173,15 +181,36 @@
     function removeItem(index) {
       cart.splice(index, 1);
       updateCart();
+      calculateChange();
     }
 
-    function pay() {
-      if (cart.length === 0) return;
-      document.getElementById('confetti').innerText = '🎉 Transaksi Berhasil!';
+    document.getElementById('customerMoney').addEventListener('input', calculateChange);
+
+    function calculateChange() {
+      const money = parseInt(document.getElementById('customerMoney').value);
+      const total = cart.reduce((sum, item) => sum + item.price, 0);
+      const change = money - total;
+      const info = document.getElementById('changeInfo');
+      const payBtn = document.getElementById('finalPayBtn');
+
+      if (money >= total && cart.length > 0) {
+        info.innerText = `Kembalian: Rp ${change}`;
+        payBtn.disabled = false;
+      } else {
+        info.innerText = money ? `Uang kurang Rp ${Math.abs(change)}` : '';
+        payBtn.disabled = true;
+      }
+    }
+
+    function finalizePayment() {
+      document.getElementById('finalMessage').innerText = '🎉 Transaksi Berhasil!';
       setTimeout(() => {
-        document.getElementById('confetti').innerText = '';
         cart = [];
         updateCart();
+        document.getElementById('customerMoney').value = '';
+        document.getElementById('changeInfo').innerText = '';
+        document.getElementById('finalMessage').innerText = '';
+        document.getElementById('finalPayBtn').disabled = true;
       }, 2000);
     }
 
